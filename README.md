@@ -2,11 +2,15 @@
 
 An Event has a category, a name and a payload of data (the payload can change according to which event an Application is sending)
   Structure for this:
-   {
-    category: string,
-    name: string,
-    payload: {}
-   }
+   
+  "session_id": "e2085be5-9137-4e4e-80b5-f1ffddc25423",
+  "category": "page interaction",
+  "name": "pageview",
+  "data": {
+    xxxxxxx
+  },
+  "timestamp": "2021-01-01 09:15:27.243860"
+}
 Different types of Events (identified by category + name) can have different validations for their payloads
 An Event is associated to a Session
 
