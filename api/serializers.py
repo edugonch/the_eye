@@ -1,4 +1,5 @@
 from api.models import Session, Event
+from django.db import transaction
 from rest_framework import serializers
 
 class SessionSerializer(serializers.HyperlinkedModelSerializer):
@@ -11,18 +12,18 @@ class EventSerializer(serializers.HyperlinkedModelSerializer):
     session_id = serializers.CharField(write_only=True, max_length=250)
 
     def create(self, validated_data):
+        with transaction.atomic():
+            session_id = validated_data.get('session_id')
+            session = Session.objects.get_or_create(id=session_id)
 
-        session_id = validated_data.get('session_id')
-        session = Session.objects.get_or_create(id=session_id)
-
-        event = Event()
-        event.session = session[0]
-        event.category = validated_data.get('category')
-        event.name = validated_data.get('name')
-        event.data = validated_data.get('data')
-        
-        event.save()
-        return event
+            event = Event()
+            event.session = session[0]
+            event.category = validated_data.get('category')
+            event.name = validated_data.get('name')
+            event.data = validated_data.get('data')
+            
+            event.save()
+            return event
 
     class Meta:
         model = Event

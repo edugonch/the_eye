@@ -1,11 +1,13 @@
-from api.models import Session, Event
-from rest_framework import viewsets
-from rest_framework import permissions
-from rest_framework.generics import CreateAPIView
-from api.serializers import SessionSerializer, EventSerializer
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
+import django_rq
+from api.workers import new_event_worker
 
-class EventView(CreateAPIView):
-    """
-    View for that only create events
-    """
-    serializer_class = EventSerializer
+@api_view(('POST',))
+def event(request):
+    if request.method == 'POST':
+        new_event_worker.delay(request.POST)
+        return Response(status=status.HTTP_202_ACCEPTED)
+    else:
+        return Response(status=status.HTTP_404_NOT_FOUND)

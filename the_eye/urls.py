@@ -16,12 +16,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
+from django.views.decorators.csrf import csrf_exempt
 from api import views
 
 router = routers.DefaultRouter()
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('events/', views.EventView.as_view(), name='events'),
+    path('events/', csrf_exempt(views.event), name='events'),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]
