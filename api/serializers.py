@@ -21,6 +21,7 @@ class EventSerializer(serializers.HyperlinkedModelSerializer):
             event.category = validated_data.get('category')
             event.name = validated_data.get('name')
             event.data = validated_data.get('data')
+            event.time_of_occurrence = validated_data.get('time_of_occurrence')
             
             event.save()
             return event

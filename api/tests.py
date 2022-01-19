@@ -3,6 +3,7 @@ from rest_framework.test import RequestsClient
 from rest_framework import status
 import django_rq
 from api.models import Event, Session
+from api.serializers import EventSerializer
 from datetime import datetime
 
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
@@ -58,7 +59,7 @@ class EventPostEndpointCase(TestCase):
             "host": "www.consumeraffairs.com",
             "path": "/"
         },
-        "timestamp": "2021-01-01 09:15:27.243860"
+        "time_of_occurrence": "2021-01-01 09:15:27.243860"
     }
     queue = django_rq.get_queue('default')
         
@@ -70,17 +71,78 @@ class EventPostEndpointCase(TestCase):
         
         response = self.rest_client.post('http://127.0.0.1:8000/events/', 
             {
-                "session_istatstatus_codeus_code": "e2085be5-9137-4e4e-80b5-f1ffddc25423",
+                "session_id": "e2085be5-9137-4e4e-80b5-f1ffddc25423",
                 "category": "page interaction",
                 "name": "pageview",
                 "data": {
                     "host": "www.consumeraffairs.com",
                     "path": "/"
                 },
-                "timestamp": "2021-01-01 09:15:27.243860"
+                "time_of_occurrence": "2021-01-01 09:15:27.243860"
             }
         )
 
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
 
-        self.assertEqual(len(queue.jobs), 1)
+        self.assertEqual(len(self.queue.jobs), 1)
+
+class EventSerializerCase(TestCase):
+
+
+    def test_create_new_event(self):
+        serializer = EventSerializer(data={
+                "session_id": "e2085be5-9137-4e4e-80b5-f1ffddc25423",
+                "category": "page interaction",
+                "name": "pageview",
+                "data": {
+                    "host": "www.consumeraffairs.com",
+                    "path": "/"
+                },
+                "time_of_occurrence": datetime.now()
+            }
+            
+        )
+
+        self.assertEqual(serializer.is_valid(), True)
+
+        serializer.save()
+
+        self.assertEqual(Event.objects.count(), 1)
+
+        self.assertEqual(Session.objects.count(), 1)
+
+
+    def test_only_one_session_is_created(self):
+        serializer1 = EventSerializer(data={
+                "session_id": "5555555555555",
+                "category": "page interaction1",
+                "name": "pageview",
+                "data": {
+                    "host": "www.consumeraffairs.com",
+                    "path": "/"
+                },
+                "time_of_occurrence": datetime.now()
+            }
+            
+        )
+
+        serializer2 = EventSerializer(data={
+                "session_id": "5555555555555",
+                "category": "page interaction2",
+                "name": "pageview",
+                "data": {
+                    "host": "www.consumeraffairs.com",
+                    "path": "/"
+                },
+                "time_of_occurrence": datetime.now()
+            }
+            
+        )
+
+        serializer1.is_valid()
+        serializer1.save()
+
+        serializer2.is_valid()
+        serializer2.save()
+
+        self.assertEqual(Session.objects.count(), 1)
