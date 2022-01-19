@@ -10,3 +10,10 @@
 
 1) The database use the default SQLite, so you won't need to install a server db
 2) You will need a redis instance running on port 6379
+
+## Run the app
+Api server: 
+python manage.py runserver
+
+Workers:
+python manage.py rqworker default
