@@ -1,3 +1,4 @@
+import json
 from django.test import TestCase
 from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
@@ -74,7 +75,7 @@ class EventPostEndpointCase(TestCase):
 
     def test_unauthorized_request(self):
         response = self.rest_client.post('http://127.0.0.1:8000/events/', 
-            {
+            json.dumps ({
                 "session_id": "e2085be5-9137-4e4e-80b5-f1ffddc25423",
                 "category": "page interaction",
                 "name": "pageview",
@@ -83,7 +84,7 @@ class EventPostEndpointCase(TestCase):
                     "path": "/"
                 },
                 "time_of_occurrence": "2021-01-01 09:15:27.243860"
-            }
+            })
         )
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -95,7 +96,7 @@ class EventPostEndpointCase(TestCase):
         self.assertEqual(Session.objects.count(), 0)
         
         response = self.rest_client.post('http://127.0.0.1:8000/events/', 
-            {
+            json.dumps ({
                 "session_id": "e2085be5-9137-4e4e-80b5-f1ffddc25423",
                 "category": "page interaction",
                 "name": "pageview",
@@ -104,7 +105,7 @@ class EventPostEndpointCase(TestCase):
                     "path": "/"
                 },
                 "time_of_occurrence": "2021-01-01 09:15:27.243860"
-            }, headers={'Authorization': 'Token {}'.format(Token.objects.last())}
+            }), headers={'Authorization': 'Token {}'.format(Token.objects.last())}
         )
 
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
