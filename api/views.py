@@ -18,7 +18,7 @@ def event(request):
         except Exception as e:
             with transaction.atomic():
                 ErrorLog.objects.create(
-                    session = '',
+                    session_id = '',
                     event_payload = request.body,
                     error_message=e,
                     place_of_error="event view"

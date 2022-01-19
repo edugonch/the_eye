@@ -1,12 +1,13 @@
 from api.models import Session, Event
 from rest_framework import serializers
+from api.validators import PageViewEventValidator, CtaClickEventValidator, FormInteractionEventValidator
 
-class SessionSerializer(serializers.HyperlinkedModelSerializer):
+class SessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Session
         fields = ['id']
 
-class EventSerializer(serializers.HyperlinkedModelSerializer):
+class EventSerializer(serializers.ModelSerializer):
 
     session_id = serializers.CharField(write_only=True, max_length=250)
 
@@ -31,3 +32,12 @@ class EventSerializer(serializers.HyperlinkedModelSerializer):
         extra_kwargs = {
             'session_id': {'write_only': True}
         }
+
+class PageViewEventSerializer(EventSerializer):
+    data = serializers.JSONField(validators=[PageViewEventValidator()])
+
+class CtaClickEventSerializer(EventSerializer):
+    data = serializers.JSONField(validators=[CtaClickEventValidator()])
+
+class FormInteractionEventSerializer(EventSerializer):
+    data = serializers.JSONField(validators=[FormInteractionEventValidator()])

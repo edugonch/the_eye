@@ -6,7 +6,7 @@ from rest_framework.test import RequestsClient
 from rest_framework import status
 import django_rq
 from api.models import Event, Session
-from api.serializers import EventSerializer
+from api.serializers import EventSerializer, PageViewEventSerializer, CtaClickEventSerializer, FormInteractionEventSerializer
 from datetime import datetime
 
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
@@ -20,7 +20,7 @@ class EventTestCase(TestCase):
             category='page interaction',
             name='cta click',
             data={
-                "host": "www.consumeraffairs.com",
+                "host": "https://www.consumeraffairs.com",
                 "path": "/",
                 "element": "chat bubble"
             },
@@ -31,7 +31,7 @@ class EventTestCase(TestCase):
             category='form interaction',
             name='submit',
             data={
-                "host": "www.consumeraffairs.com",
+                "host": "https://www.consumeraffairs.com",
                 "path": "/",
                 "form": {
                     "first_name": "John",
@@ -46,7 +46,7 @@ class EventTestCase(TestCase):
         event1 = Event.objects.get(name="cta click")
         event2 = Event.objects.get(name="submit")
         self.assertEqual(event1.category, 'page interaction')
-        self.assertEqual(event1.data['host'], 'www.consumeraffairs.com')
+        self.assertEqual(event1.data['host'], 'https://www.consumeraffairs.com')
         self.assertEqual(event1.data['path'], '/')
         self.assertEqual(event1.data['element'], 'chat bubble')
         self.assertEqual(event1.time_of_occurrence.replace(tzinfo=None), DEFAULT_DATE)
@@ -66,7 +66,7 @@ class EventPostEndpointCase(TestCase):
         "category": "page interaction",
         "name": "pageview",
         "data": {
-            "host": "www.consumeraffairs.com",
+            "host": "https://www.consumeraffairs.com",
             "path": "/"
         },
         "time_of_occurrence": "2021-01-01 09:15:27.243860"
@@ -80,7 +80,7 @@ class EventPostEndpointCase(TestCase):
                 "category": "page interaction",
                 "name": "pageview",
                 "data": {
-                    "host": "www.consumeraffairs.com",
+                    "host": "https://www.consumeraffairs.com",
                     "path": "/"
                 },
                 "time_of_occurrence": "2021-01-01 09:15:27.243860"
@@ -101,7 +101,7 @@ class EventPostEndpointCase(TestCase):
                 "category": "page interaction",
                 "name": "pageview",
                 "data": {
-                    "host": "www.consumeraffairs.com",
+                    "host": "https://www.consumeraffairs.com",
                     "path": "/"
                 },
                 "time_of_occurrence": "2021-01-01 09:15:27.243860"
@@ -121,7 +121,7 @@ class EventSerializerCase(TestCase):
                 "category": "page interaction",
                 "name": "pageview",
                 "data": {
-                    "host": "www.consumeraffairs.com",
+                    "host": "https://www.consumeraffairs.com",
                     "path": "/"
                 },
                 "time_of_occurrence": datetime.now()
@@ -144,7 +144,7 @@ class EventSerializerCase(TestCase):
                 "category": "page interaction1",
                 "name": "pageview",
                 "data": {
-                    "host": "www.consumeraffairs.com",
+                    "host": "https://www.consumeraffairs.com",
                     "path": "/"
                 },
                 "time_of_occurrence": datetime.now()
@@ -157,7 +157,7 @@ class EventSerializerCase(TestCase):
                 "category": "page interaction2",
                 "name": "pageview",
                 "data": {
-                    "host": "www.consumeraffairs.com",
+                    "host": "https://www.consumeraffairs.com",
                     "path": "/"
                 },
                 "time_of_occurrence": datetime.now()
@@ -172,3 +172,73 @@ class EventSerializerCase(TestCase):
         serializer2.save()
 
         self.assertEqual(Session.objects.count(), 1)
+
+
+class PageViewEventSerializerCase(TestCase):
+    def test_wrong_host_url(self):
+        serializer = PageViewEventSerializer(data={
+            "session_id": "e2085be5-9137-4e4e-80b5-f1ffddc25423",
+            "category": "page interaction",
+            "name": "pageview",
+            "data": {
+                "host": "not an url",
+                "path": "/",
+            },
+            "time_of_occurrence": datetime.now()
+            }
+        )
+
+        self.assertEqual(serializer.is_valid(), False)
+        self.assertEqual(serializer.errors['data'][0].title(), "Host Is Not In The Correct Format Not An Url.")
+
+    def test_wrong_path(self):
+        serializer = PageViewEventSerializer(data={
+            "session_id": "e2085be5-9137-4e4e-80b5-f1ffddc25423",
+            "category": "page interaction",
+            "name": "pageview",
+            "data": {
+                "host": "https://www.consumeraffairs.com",
+                "path": "this is not a path",
+            },
+            "time_of_occurrence": datetime.now()
+            }
+        )
+
+        self.assertEqual(serializer.is_valid(), False)
+        self.assertEqual(serializer.errors['data'][0].title(), "Path Is Not In The Correct Format This Is Not A Path")
+
+class CtaClickEventSerializerCase(TestCase):
+    def test_element_not_present(self):
+        serializer = CtaClickEventSerializer(data={
+            "session_id": "e2085be5-9137-4e4e-80b5-f1ffddc25423",
+            "category": "page interaction",
+            "name": "cta click",
+            "data": {
+                "host": "https://www.consumeraffairs.com",
+                "path": "/",
+            },
+            "time_of_occurrence": datetime.now()
+            }
+        )
+
+        self.assertEqual(serializer.is_valid(), False)
+        self.assertEqual(serializer.errors['data'][0].title(), "Missing Element Keyworkd On Payload {'Host': 'Https://Www.Consumeraffairs.Com', 'Path': '/'}")
+
+class FormInteractionEventSerializerCase(TestCase):
+    def test_form_incorrect_format(self):
+        serializer = FormInteractionEventSerializer(data={
+            "session_id": "e2085be5-9137-4e4e-80b5-f1ffddc25423",
+            "category": "form interaction",
+            "name": "submit",
+            "data": {
+                "host": "https://www.consumeraffairs.com",
+                "path": "/",
+                "form": "Not a form"
+            },
+            "time_of_occurrence": datetime.now()
+            }
+        )
+
+        self.assertEqual(serializer.is_valid(), False)
+
+        self.assertEqual(serializer.errors['data'][0].title(), "Form Is Not In The Correct Format Not A Form")
