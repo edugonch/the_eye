@@ -1,4 +1,6 @@
 from django.test import TestCase
+from django.contrib.auth.models import User
+from rest_framework.authtoken.models import Token
 from rest_framework.test import RequestsClient
 from rest_framework import status
 import django_rq
@@ -50,6 +52,13 @@ class EventTestCase(TestCase):
 
 
 class EventPostEndpointCase(TestCase):
+    def setUp(self):
+        # Create User
+        user = User.objects.create(email='test@test.com', username='example.com')
+        # Create token
+        Token.objects.create(user=user)
+
+
     rest_client = RequestsClient()
     event_data1 = {
         "session_id": "e2085be5-9137-4e4e-80b5-f1ffddc25423",
@@ -62,7 +71,23 @@ class EventPostEndpointCase(TestCase):
         "time_of_occurrence": "2021-01-01 09:15:27.243860"
     }
     queue = django_rq.get_queue('default')
-        
+
+    def test_unauthorized_request(self):
+        response = self.rest_client.post('http://127.0.0.1:8000/events/', 
+            {
+                "session_id": "e2085be5-9137-4e4e-80b5-f1ffddc25423",
+                "category": "page interaction",
+                "name": "pageview",
+                "data": {
+                    "host": "www.consumeraffairs.com",
+                    "path": "/"
+                },
+                "time_of_occurrence": "2021-01-01 09:15:27.243860"
+            }
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+                
 
     def test_session_creation_when_not_exists(self):
         self.queue.empty()
@@ -79,7 +104,7 @@ class EventPostEndpointCase(TestCase):
                     "path": "/"
                 },
                 "time_of_occurrence": "2021-01-01 09:15:27.243860"
-            }
+            }, headers={'Authorization': 'Token {}'.format(Token.objects.last())}
         )
 
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
