@@ -1,27 +1,12 @@
-# the_eye
+# The Eye
 
-An Event has a category, a name and a payload of data (the payload can change according to which event an Application is sending)
-  Structure for this:
-   
-  "session_id": "e2085be5-9137-4e4e-80b5-f1ffddc25423",
-  "category": "page interaction",
-  "name": "pageview",
-  "data": {
-    xxxxxxx
-  },
-  "timestamp": "2021-01-01 09:15:27.243860"
-}
-Different types of Events (identified by category + name) can have different validations for their payloads
-An Event is associated to a Session
+## Conclutions
 
-Events in a Session should be sequential and ordered by the time they occurred
-Add a timestamp to event creation
+1) Application should respond quick, even is there are erros on the payload, the user interaction can't be delayed b/c a process error or delayed on the backend
+2) Add a token authentication so the eye can be sure this is a trusted client, the token can be created on the django admin backend, linked to an user.
+3) I took the example use cases, I tryied to make a modular architecture, so in case of adding more use cases I can have the flexibility to do this
 
-The Application sending events is responsible for generating the Session identifier
-Session indentifyer commes from the client
+## Requirements
 
-Applications should be recognized as "trusted clients" to "The Eye"
-CORS
-
-Appllications can send events for the same session
-Not too clear here ....
+1) The database use the default SQLite, so you won't need to install a server db
+2) You will need a redis instance running on port 6379
