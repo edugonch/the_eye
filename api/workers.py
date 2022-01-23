@@ -27,7 +27,7 @@ def new_event_worker(params):
             serializer.save()
         else:
             if is_multiple:
-                session= params["session_id"]
+                session_id= params["session_id"]
             else:
                 session_id = ''
             ErrorLog.objects.create(
